@@ -20,3 +20,9 @@ services:
        WORDPRESS_DB_USER: wordpress
        WORDPRESS_DB_PASSWORD: wordpress
        WORDPRESS_DB_NAME: wordpress
+   redis:
+     container_name: "smart_redis"
+     image: redis:4.0
+   nexus:
+     container_name: 'Nexus'
+     image: 'sonatype/nexus3:3.20.1'     
