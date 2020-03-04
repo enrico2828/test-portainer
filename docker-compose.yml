@@ -1,0 +1,15 @@
+version: '2'
+
+services:
+
+
+    ##########################################################################
+    # Portainer
+    ##########################################################################
+  portainer:
+      container_name: 'portainer'
+      image: portainer/portainer:1.23.1
+      volumes:
+        - "/var/run/docker.sock:/var/run/docker.sock"
+      ports:
+        - 9000:9000
