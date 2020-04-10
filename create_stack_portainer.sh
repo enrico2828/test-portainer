@@ -16,7 +16,7 @@ retrievetoken()
   jwtToken=$(curl -s -X POST -d "{ \"username\" : \"admin\", \"password\" : \"admin123\" }" "${BASE_URL}/api/auth" --header "Content-Type:application/json" | jq -r '.jwt' )
 }
 
-createstackgit()
+createstackgitcompose()
 {
   echo "Creating stack from GIT with name ${PROJECT}"
   curl -X POST "${BASE_URL}/api/stacks?type=2&method=repository&endpointId=1" \
@@ -28,7 +28,27 @@ createstackgit()
     \"Name\": \"${PROJECT}snapshot\",
     \"RepositoryURL\": \"https://github.com/enrico2828/test-portainer.git\",
     \"RepositoryReferenceName\": \"refs/heads/master\",
-    \"ComposeFilePathInRepository\": \"${PROJECT}/snapshot/docker-compose.yml\",
+    \"ComposeFilePathInRepository\": \"compose/${PROJECT}/snapshot/docker-compose.yml\",
+    \"RepositoryAuthentication\": false,
+    \"Env\": []
+     }
+     "
+}
+
+createstackgitswarm()
+{
+  echo "Creating stack from GIT with name ${PROJECT}"
+  curl -X POST "${BASE_URL}/api/stacks?type=1&method=repository&endpointId=1" \
+    -H "Authorization: Bearer ${jwtToken}" \
+    -H "accept: application/json" \
+    -H "Content-Type:application/json" \
+    --data-raw "
+    {
+    \"Name\": \"${PROJECT}snapshot\",
+    \"SwarmID\": \"lriv6yox3s5ea6i28ryd85u5r\",
+    \"RepositoryURL\": \"https://github.com/enrico2828/test-portainer.git\",
+    \"RepositoryReferenceName\": \"refs/heads/master\",
+    \"ComposeFilePathInRepository\": \"swarm/${PROJECT}/snapshot/docker-compose.yml\",
     \"RepositoryAuthentication\": false,
     \"Env\": []
      }
@@ -79,24 +99,37 @@ isemptyid()
 
 # MAIN
 
+# delete docker network
+docker network rm "${PROJECT}snapshot_network"
+docker network rm "${PROJECT}snapshot_network_compose"
 
+# create docker network
+docker network create -d overlay "${PROJECT}snapshot_network"
+docker network create --attachable "${PROJECT}snapshot_network_compose"
 
 for i in {1..50}
 do
   echo "###### BATCH RUN $i ########"
   retrievetoken
   isemptyid $stackid
-  if [ $MODE == "git" ]; then
-     createstackgit
-  elif [ $MODE == "compose" ]; then
-    createstackcompose
+  if [ "$MODE" == "gitcompose" ]; then
+
+     createstackgitcompose
+  elif [ "$MODE" == "gitswarm" ]; then
+     createstackgitswarm
+  elif [ "$MODE" == "compose" ]; then
+     createstackcompose
   else
-    echo "Mode must be \'git\' or \'compose\', exiting"
+    echo "Mode must be \'gitcompose, \'gitswarm\' or \'compose\', exiting"
     exit 1
   fi
   stackid=$(getstackid)
-  isvalidid $stackid
-  deletestack $stackid
+  isvalidid "$stackid"
+  deletestack "$stackid"
   stackid=$(getstackid)
-  isemptyid $stackid
+  isemptyid "$stackid"
 done
+
+# delete docker network
+docker network rm "${PROJECT}snapshot_network"
+docker network rm "${PROJECT}snapshot_network_compose"
