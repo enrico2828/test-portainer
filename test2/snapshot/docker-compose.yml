@@ -17,7 +17,6 @@ services:
      image: wordpress:latest
      networks:
        - test2snapshot_network
-     restart: always
      environment:
        WORDPRESS_DB_HOST: db:3306
        WORDPRESS_DB_USER: wordpress
