@@ -32,5 +32,6 @@ services:
        - test2snapshot_network_compose
 
 networks:
-   test2snapshot_network_compose: 
-      external: true
+   default:
+      external:
+          name: test1snapshot_network_compose
