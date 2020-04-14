@@ -1,4 +1,6 @@
+# test1, test2 or test3
 PROJECT=$1
+# gitcompose, gitswarm, or compose
 MODE=$2
 BASE_URL="http://localhost:9000"
 
@@ -18,7 +20,8 @@ retrievetoken()
 
 createstackgitcompose()
 {
-  echo "Creating stack from GIT with name ${PROJECT}"
+
+  echo "Creating stack from GIT with name ${PROJECT} and git URL ${GIT_URL}"
   curl -X POST "${BASE_URL}/api/stacks?type=2&method=repository&endpointId=1" \
     -H "Authorization: Bearer ${jwtToken}" \
     -H "accept: application/json" \
@@ -26,7 +29,7 @@ createstackgitcompose()
     --data-raw "
     {
     \"Name\": \"${PROJECT}snapshot\",
-    \"RepositoryURL\": \"https://github.com/enrico2828/test-portainer.git\",
+    \"RepositoryURL\": \"${GIT_URL}\",
     \"RepositoryReferenceName\": \"refs/heads/master\",
     \"ComposeFilePathInRepository\": \"compose/${PROJECT}/snapshot/docker-compose.yml\",
     \"RepositoryAuthentication\": false,
@@ -37,7 +40,7 @@ createstackgitcompose()
 
 createstackgitswarm()
 {
-  echo "Creating stack from GIT with name ${PROJECT}"
+  echo "Creating stack from GIT with name ${PROJECT} and git URL ${GIT_URL}"
   curl -X POST "${BASE_URL}/api/stacks?type=1&method=repository&endpointId=1" \
     -H "Authorization: Bearer ${jwtToken}" \
     -H "accept: application/json" \
@@ -46,7 +49,7 @@ createstackgitswarm()
     {
     \"Name\": \"${PROJECT}snapshot\",
     \"SwarmID\": \"lriv6yox3s5ea6i28ryd85u5r\",
-    \"RepositoryURL\": \"https://github.com/enrico2828/test-portainer.git\",
+    \"RepositoryURL\": \"${GIT_URL}\",
     \"RepositoryReferenceName\": \"refs/heads/master\",
     \"ComposeFilePathInRepository\": \"swarm/${PROJECT}/snapshot/docker-compose.yml\",
     \"RepositoryAuthentication\": false,
@@ -107,13 +110,15 @@ docker network rm "${PROJECT}snapshot_network_compose"
 docker network create -d overlay "${PROJECT}snapshot_network"
 docker network create --attachable "${PROJECT}snapshot_network_compose"
 
+PROJECT_NR=${PROJECT: -1}
+GIT_URL="https://github.com/enrico2828/test-portainer${PROJECT_NR}.git"
+
 for i in {1..50}
 do
   echo "###### BATCH RUN $i ########"
   retrievetoken
   isemptyid $stackid
   if [ "$MODE" == "gitcompose" ]; then
-
      createstackgitcompose
   elif [ "$MODE" == "gitswarm" ]; then
      createstackgitswarm
